@@ -150,7 +150,7 @@ export default function LoginForm({
         ) {
 
           router.push(
-            "/employer/assessment-request"
+            "/employer-assessment-request"
           );
 
           return;
