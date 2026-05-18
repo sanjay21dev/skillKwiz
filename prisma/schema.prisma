@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  id         Int      @id @default(autoincrement())
+  firstName  String
+  lastName   String
+  email      String   @unique
+  phone      String
+  password   String
+  resume     String
+  createdAt  DateTime @default(now())
+}
+
+model Employer {
+  id           Int      @id @default(autoincrement())
+  firstName    String
+  lastName     String
+  companyName  String
+  email        String   @unique
+  phone        String
+  department   String
+  password     String
+  createdAt    DateTime @default(now())
+}
+
+
+model ScheduledAssessment {
+  id               String   @id @default(cuid())
+
+  employeeName     String
+  employeeEmail    String
+
+  phone            String
+
+  company          String
+
+  country          String
+  zipCode          String
+  testingCenter    String
+
+  assessmentDate   String
+  assessmentTime   String
+
+  createdAt        DateTime @default(now())
+}
+
+
+model EmployerAssessmentRequest {
+
+  id                Int      @id @default(autoincrement())
+
+  assessmentId      String
+
+  employeeName      String
+
+  employeeEmail     String
+
+  employeePhone     String?
+
+  company           String
+
+  candidateId       String
+
+  jobFamily         String
+
+  skillsFamily      String
+
+  costUnit          String
+
+  department        String
+
+  businessUnit      String
+
+  selectedSkills    String
+
+  paymentId         String?
+
+  paymentStatus     String
+
+  status            String
+
+  // NEW
+  testStatus        String   @default("PENDING")
+  testLink          String?
+
+  testLinkSent      Boolean  @default(false)
+
+  reportUrl         String?
+
+  score             String?
+
+  reportSent        Boolean  @default(false)
+
+  createdAt         DateTime @default(now())
+
+  testCompleted   Boolean @default(false)
+
+  testScore       String?
+  
+  submittedAnswers String?
+  
+  reportStatus    String @default("PENDING")
+}
+
+model AssessmentSchedule {
+
+  id                Int      @id @default(autoincrement())
+  
+  company           String
+  country           String
+  zipCode           String
+  testingCenter     String
+
+  assessmentDate    String
+  assessmentTime    String
+
+  paymentMethod     String
+  amount            String
+  paymentStatus     String
+  paymentId         String
+
+  employeeName      String
+  employeeEmail     String
+
+  employerStatus    String   @default("PENDING")
+
+  testStatus        String   @default("NOT_SENT")
+
+  reportStatus      String   @default("PENDING")
+
+  reportUrl         String?
+
+  score             String?
+
+  result            String?
+
+  createdAt         DateTime @default(now())
+}
+
+
