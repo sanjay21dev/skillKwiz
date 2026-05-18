@@ -132,33 +132,17 @@ export default function EmployerRegistration({
         const data =
           await response.json();
 
-        // if (data.success) {
-
-        //   alert(
-        //     "Employer Registered Successfully"
-        //   );
-
-        //   window.location.href =
-        //     "/employer-assessment-request";
-
-        // } 
         if (data.success) {
 
-  // SAVE EMPLOYER IN LOCAL STORAGE
-  localStorage.setItem(
-    "employer",
-    JSON.stringify(data.employer)
-  );
+          alert(
+            "Employer Registered Successfully"
+          );
 
-  alert(
-    "Employer Registered Successfully"
-  );
+          // window.location.href =
+          //   "/employer-assessment-request";
+          onSubmit(data);
 
-  window.location.href =
-    "/employer-assessment-request";
-
-}
-        else {
+        } else {
 
           alert(
             data.message

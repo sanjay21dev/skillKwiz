@@ -96,81 +96,35 @@ export default function EmployerAssessmentRequest() {
   // LOAD SCHEDULED ASSESSMENTS
   useEffect(() => {
 
-  // CHECK EMPLOYER LOGIN
-  const employer =
-    localStorage.getItem(
-      "employer"
-    );
+    const loadAssessments =
+      async () => {
 
-  if (!employer) {
+        try {
 
-    window.location.href =
-      "/employer-register";
+          const response =
+            await fetch(
+              "/api/schedule-assessment/list"
+            );
 
-    return;
-  }
+          const data =
+            await response.json();
 
-  // LOAD ASSESSMENTS
-  const loadAssessments =
-    async () => {
+          if (data.success) {
 
-      try {
+            setScheduledAssessments(
+              data.assessments
+            );
+          }
 
-        const response =
-          await fetch(
-            "/api/schedule-assessment/list"
-          );
+        } catch (error) {
 
-        const data =
-          await response.json();
-
-        if (data.success) {
-
-          setScheduledAssessments(
-            data.assessments
-          );
+          console.log(error);
         }
+      };
 
-      } catch (error) {
+    loadAssessments();
 
-        console.log(error);
-      }
-    };
-
-  loadAssessments();
-
-}, []);
-  // useEffect(() => {
-
-  //   const loadAssessments =
-  //     async () => {
-
-  //       try {
-
-  //         const response =
-  //           await fetch(
-  //             "/api/schedule-assessment/list"
-  //           );
-
-  //         const data =
-  //           await response.json();
-
-  //         if (data.success) {
-
-  //           setScheduledAssessments(
-  //             data.assessments
-  //           );
-  //         }
-
-  //       } catch (error) {
-
-  //         console.log(error);
-  //       }
-  //     };
-
-  //   loadAssessments();
-
-  // }, []);
+  }, []);
 
   const toggleSkill = (
     skill: string
