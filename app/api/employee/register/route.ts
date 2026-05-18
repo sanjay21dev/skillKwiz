@@ -2,11 +2,15 @@ import { NextResponse } from "next/server";
 
 import prisma from "@/lib/prisma";
 
-import fs from "fs";
-
-import path from "path";
-
 import bcrypt from "bcryptjs";
+
+import { createClient } from "@supabase/supabase-js";
+
+const supabase =
+  createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
 export async function POST(
   req: Request
@@ -16,38 +20,24 @@ export async function POST(
     const formData =
       await req.formData();
 
-    // GET VALUES
     const firstName =
-      formData.get(
-        "firstName"
-      ) as string;
+      formData.get("firstName") as string;
 
     const lastName =
-      formData.get(
-        "lastName"
-      ) as string;
+      formData.get("lastName") as string;
 
     const email =
-      formData.get(
-        "email"
-      ) as string;
+      formData.get("email") as string;
 
     const phone =
-      formData.get(
-        "phone"
-      ) as string;
+      formData.get("phone") as string;
 
     const password =
-      formData.get(
-        "password"
-      ) as string;
+      formData.get("password") as string;
 
     const resume =
-      formData.get(
-        "resume"
-      ) as File;
+      formData.get("resume") as File;
 
-    // VALIDATION
     if (
       !firstName ||
       !lastName ||
@@ -63,12 +53,9 @@ export async function POST(
       });
     }
 
-    // CHECK EXISTING USER
     const existingUser =
       await prisma.employee.findUnique({
-        where: {
-          email,
-        },
+        where: { email },
       });
 
     if (existingUser) {
@@ -79,14 +66,13 @@ export async function POST(
       });
     }
 
-    // HASH PASSWORD
     const hashedPassword =
       await bcrypt.hash(
         password,
         10
       );
 
-    // CREATE FILE BUFFER
+    // FILE BUFFER
     const bytes =
       await resume.arrayBuffer();
 
@@ -97,39 +83,39 @@ export async function POST(
     const fileName =
       `${Date.now()}-${resume.name}`;
 
-    // UPLOAD PATH
-    const uploadPath =
-      path.join(
-        process.cwd(),
-        "public/uploads",
-        fileName
-      );
+    // UPLOAD TO SUPABASE
+    const { error } =
+      await supabase.storage
+        .from("resumes")
+        .upload(
+          fileName,
+          buffer,
+          {
+            contentType:
+              resume.type,
+          }
+        );
 
-    // CREATE uploads folder if not exists
-    const uploadDir =
-      path.join(
-        process.cwd(),
-        "public/uploads"
-      );
+    if (error) {
 
-    if (
-      !fs.existsSync(
-        uploadDir
-      )
-    ) {
-      fs.mkdirSync(
-        uploadDir,
-        {
-          recursive: true,
-        }
-      );
+      console.log(error);
+
+      return NextResponse.json({
+        success: false,
+        message:
+          "Resume upload failed",
+      });
     }
 
-    // SAVE FILE
-    fs.writeFileSync(
-      uploadPath,
-      buffer
-    );
+    // PUBLIC URL
+    const {
+      data: publicUrlData,
+    } =
+      supabase.storage
+        .from("resumes")
+        .getPublicUrl(
+          fileName
+        );
 
     // SAVE DATABASE
     const employee =
@@ -142,7 +128,7 @@ export async function POST(
           password:
             hashedPassword,
           resume:
-            `/uploads/${fileName}`,
+            publicUrlData.publicUrl,
         },
       });
 
