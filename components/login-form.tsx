@@ -4,6 +4,8 @@ import type React from "react";
 
 import { useState } from "react";
 
+import { useRouter } from "next/navigation";
+
 import {
   Mail,
   Lock,
@@ -24,6 +26,8 @@ interface LoginFormProps {
 export default function LoginForm({
   onLogin,
 }: LoginFormProps) {
+
+  const router = useRouter();
 
   const [email, setEmail] =
     useState("");
@@ -126,7 +130,9 @@ export default function LoginForm({
       const data =
         await response.json();
 
+      // =========================
       // SUCCESS
+      // =========================
       if (data.success) {
 
         await new Promise(
@@ -137,6 +143,20 @@ export default function LoginForm({
             )
         );
 
+        // EMPLOYER
+        if (
+          userType ===
+          "employer"
+        ) {
+
+          router.push(
+            "/employer/assessment-request"
+          );
+
+          return;
+        }
+
+        // EMPLOYEE / ADMIN
         onLogin(
           userType,
           false
@@ -145,11 +165,28 @@ export default function LoginForm({
         return;
       }
 
+      // =========================
       // NEW USER
+      // =========================
       if (data.newUser) {
 
+        // NEW EMPLOYER
         if (
-          userType === "admin"
+          userType ===
+          "employer"
+        ) {
+
+          router.push(
+            "/employer/register"
+          );
+
+          return;
+        }
+
+        // ADMIN
+        if (
+          userType ===
+          "admin"
         ) {
 
           setLoginError(
@@ -166,6 +203,9 @@ export default function LoginForm({
         return;
       }
 
+      // =========================
+      // OTHER ERRORS
+      // =========================
       setLoginError(
         data.message ||
           "Login failed"
@@ -507,6 +547,8 @@ export default function LoginForm({
 
 // import { useState } from "react";
 
+// import { useRouter } from "next/navigation";
+
 // import {
 //   Mail,
 //   Lock,
@@ -518,7 +560,8 @@ export default function LoginForm({
 //   onLogin: (
 //     userType:
 //       | "employer"
-//       | "employee",
+//       | "employee"
+//       | "admin",
 //     isSignup?: boolean
 //   ) => void;
 // }
@@ -535,7 +578,9 @@ export default function LoginForm({
 
 //   const [userType, setUserType] =
 //     useState<
-//       "employer" | "employee"
+//       "employer" |
+//       "employee" |
+//       "admin"
 //     >("employee");
 
 //   const [
@@ -568,127 +613,100 @@ export default function LoginForm({
 
 //     setLoginError("");
 
+//     let api = "";
+
 //     // =========================
-//     // EMPLOYEE LOGIN
+//     // EMPLOYEE
 //     // =========================
 //     if (
 //       userType === "employee"
 //     ) {
 
-//       try {
-
-//         const response =
-//           await fetch(
-//             "/api/employee/login",
-//             {
-//               method: "POST",
-
-//               headers: {
-//                 "Content-Type":
-//                   "application/json",
-//               },
-
-//               credentials:
-//                 "include",
-
-//               body: JSON.stringify({
-//                 email,
-//                 password,
-//               }),
-//             }
-//           );
-
-//         const data =
-//           await response.json();
-
-//         // SUCCESS
-//         if (data.success) {
-
-//   // WAIT FOR COOKIE STORAGE
-//   await new Promise(
-//     (resolve) =>
-//       setTimeout(resolve, 500)
-//   );
-
-//   onLogin(
-//     "employee",
-//     false
-//   );
-
-//   return;
-// }
-
-//         // NEW USER
-//         if (data.newUser) {
-
-//           setLoginError(
-//             "Employee not registered. Please sign up first."
-//           );
-
-//           return;
-//         }
-
-//         setLoginError(
-//           data.message ||
-//             "Login failed"
-//         );
-
-//       } catch (error) {
-
-//         console.log(error);
-
-//         setLoginError(
-//           "Something went wrong."
-//         );
-//       }
-
-//       return;
+//       api =
+//         "/api/employee/login";
 //     }
 
 //     // =========================
-//     // EMPLOYER LOGIN
+//     // EMPLOYER
 //     // =========================
+//     if (
+//       userType === "employer"
+//     ) {
+
+//       api =
+//         "/api/employer/login";
+//     }
+
+//     // =========================
+//     // ADMIN
+//     // =========================
+//     if (
+//       userType === "admin"
+//     ) {
+
+//       api =
+//         "/api/admin/login";
+//     }
+
 //     try {
 
 //       const response =
-//         await fetch(
-//           "/api/employer/login",
-//           {
-//             method: "POST",
+//         await fetch(api, {
+//           method: "POST",
 
-//             headers: {
-//               "Content-Type":
-//                 "application/json",
-//             },
+//           headers: {
+//             "Content-Type":
+//               "application/json",
+//           },
 
-//             credentials:
-//               "include",
+//           credentials:
+//             "include",
 
-//             body: JSON.stringify({
-//               email,
-//               password,
-//             }),
-//           }
-//         );
+//           body: JSON.stringify({
+//             email,
+//             password,
+//           }),
+//         });
 
 //       const data =
 //         await response.json();
 
+//       // SUCCESS
 //       if (data.success) {
 
+//         await new Promise(
+//           (resolve) =>
+//             setTimeout(
+//               resolve,
+//               500
+//             )
+//         );
+
 //         onLogin(
-//           "employer",
+//           userType,
 //           false
 //         );
 
 //         return;
 //       }
 
+//       // NEW USER
 //       if (data.newUser) {
 
-//         setLoginError(
-//           "Employer not registered. Please sign up first."
-//         );
+//         if (
+//           userType === "admin"
+//         ) {
+
+//           setLoginError(
+//             "Invalid admin credentials"
+//           );
+
+//         } else {
+
+//           setLoginError(
+//             `${userType} not registered. Please sign up first.`
+//           );
+//         }
 
 //         return;
 //       }
@@ -721,6 +739,7 @@ export default function LoginForm({
 //   };
 
 //   return (
+
 //     <div className="text-gray-300">
 
 //       <h1 className="text-3xl font-semibold text-center mb-2">
@@ -735,9 +754,7 @@ export default function LoginForm({
 //           : "Sign in to access your account"}
 //       </p>
 
-//       {/* ========================= */}
 //       {/* LOGIN FORM */}
-//       {/* ========================= */}
 //       {!forgotMode && (
 
 //         <form
@@ -748,8 +765,9 @@ export default function LoginForm({
 //         >
 
 //           {/* USER TYPE */}
-//           <div className="grid grid-cols-2 gap-4">
+//           <div className="grid grid-cols-3 gap-4">
 
+//             {/* EMPLOYEE */}
 //             <button
 //               type="button"
 //               onClick={() =>
@@ -767,6 +785,7 @@ export default function LoginForm({
 //               👤 Employee
 //             </button>
 
+//             {/* EMPLOYER */}
 //             <button
 //               type="button"
 //               onClick={() =>
@@ -781,7 +800,25 @@ export default function LoginForm({
 //                   : "bg-gray-600 hover:bg-gray-500"
 //               }`}
 //             >
-//               👤 Employer
+//               🏢 Employer
+//             </button>
+
+//             {/* ADMIN */}
+//             <button
+//               type="button"
+//               onClick={() =>
+//                 setUserType(
+//                   "admin"
+//                 )
+//               }
+//               className={`py-3 rounded transition ${
+//                 userType ===
+//                 "admin"
+//                   ? "bg-blue-600"
+//                   : "bg-gray-600 hover:bg-gray-500"
+//               }`}
+//             >
+//               🛡️ Admin
 //             </button>
 
 //           </div>
@@ -900,35 +937,37 @@ export default function LoginForm({
 //           </button>
 
 //           {/* REGISTER */}
-//           <div className="text-center">
+//           {userType !==
+//             "admin" && (
 
-//             <p className="text-gray-300">
+//             <div className="text-center">
 
-//               New user?{" "}
+//               <p className="text-gray-300">
 
-//               <button
-//                 type="button"
-//                 onClick={() =>
-//                   onLogin(
-//                     userType,
-//                     true
-//                   )
-//                 }
-//                 className="text-blue-400 hover:underline"
-//               >
-//                 Register here
-//               </button>
+//                 New user?{" "}
 
-//             </p>
+//                 <button
+//                   type="button"
+//                   onClick={() =>
+//                     onLogin(
+//                       userType,
+//                       true
+//                     )
+//                   }
+//                   className="text-blue-400 hover:underline"
+//                 >
+//                   Register here
+//                 </button>
 
-//           </div>
+//               </p>
+
+//             </div>
+//           )}
 
 //         </form>
 //       )}
 
-//       {/* ========================= */}
 //       {/* RESET PASSWORD */}
-//       {/* ========================= */}
 //       {forgotMode && (
 
 //         <form
