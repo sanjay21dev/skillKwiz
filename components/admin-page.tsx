@@ -153,7 +153,7 @@ export default function AdminPage() {
 
     <div className="min-h-screen bg-[#0f172a]/95 text-white flex rounded-3xl overflow-hidden">
 
-      {/* SIDEBAR */}
+      {/* SIDEBAR
       <aside className="hidden lg:flex flex-col w-72 bg-[#111827]/95 border-r border-white/10 p-6">
 
         <div className="mb-12">
@@ -204,7 +204,7 @@ export default function AdminPage() {
 
         </div>
 
-      </aside>
+      </aside> */}
 
       {/* MAIN */}
       <main className="flex-1 overflow-auto">
