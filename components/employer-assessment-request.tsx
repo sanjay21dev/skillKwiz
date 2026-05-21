@@ -12,7 +12,227 @@ import {
   PayPalButtons,
 } from "@paypal/react-paypal-js";
 
+import {
+  Elements,
+  PaymentElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
+
+import {
+  loadStripe,
+} from "@stripe/stripe-js";
+
+const stripePromise =
+  loadStripe(
+    process.env
+      .NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""
+  );
+
+  function CheckoutForm({
+  selectedAssessment,
+  candidateId,
+  jobFamily,
+  skillsFamily,
+  costUnit,
+  department,
+  businessUnit,
+  selectedSkills,
+  amount,
+  setShowThankYou,
+  setShowAssessmentModal,
+}: any) {
+
+  const stripe = useStripe();
+
+  const elements =
+    useElements();
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
+
+  const handleSubmit =
+    async (
+      e: React.FormEvent
+    ) => {
+
+      e.preventDefault();
+
+      if (
+        !stripe ||
+        !elements
+      ) {
+        return;
+      }
+
+      setLoading(true);
+
+      const result =
+  await stripe.confirmPayment({
+    elements,
+    redirect: "if_required",
+  });
+
+if (result.error) {
+
+  alert(
+    result.error.message
+  );
+
+  setLoading(false);
+
+  return;
+}
+
+      if (
+        result.paymentIntent
+          ?.status ===
+        "succeeded"
+      ) {
+
+        try {
+
+          const response =
+            await fetch(
+              "/api/employer-assessment-request/create",
+              {
+                method: "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+
+                body: JSON.stringify({
+
+                  assessmentId:
+                    selectedAssessment.id,
+
+                  employeeName:
+                    selectedAssessment.employeeName,
+
+                  employeeEmail:
+                    selectedAssessment.employeeEmail,
+
+                  employeePhone:
+                    selectedAssessment.phone,
+
+                  company:
+                    selectedAssessment.company,
+
+                  country:
+                    selectedAssessment.country,
+
+                  testingCenter:
+                    selectedAssessment.testingCenter,
+
+                  assessmentDate:
+                    selectedAssessment.assessmentDate,
+
+                  assessmentTime:
+                    selectedAssessment.assessmentTime,
+
+                  candidateId,
+
+                  jobFamily,
+
+                  skillsFamily,
+
+                  costUnit,
+
+                  department,
+
+                  businessUnit,
+
+                  selectedSkills,
+
+                  paymentId:
+                    result.paymentIntent.id,
+
+                  paymentStatus:
+                    result.paymentIntent.status,
+
+                  paymentMethod:
+                    "STRIPE",
+
+                  amount: amount,
+
+                  testStatus:
+                    "PENDING",
+
+                  reportStatus:
+                    "PENDING",
+
+                  adminApprovalStatus:
+                    "PENDING",
+                }),
+              }
+            );
+
+          const data =
+            await response.json();
+
+          if (data.success) {
+
+            setShowThankYou(
+              true
+            );
+
+            setShowAssessmentModal(
+              false
+            );
+          }
+
+        } catch (error) {
+
+          console.log(
+            error
+          );
+
+          alert(
+            "Stripe payment failed"
+          );
+        }
+      }
+
+      setLoading(false);
+    };
+
+  return (
+
+    <form
+      onSubmit={
+        handleSubmit
+      }
+      className="space-y-4"
+    >
+
+      <div className="bg-white rounded-xl p-4">
+  <PaymentElement />
+</div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-[#635BFF] text-white py-3 rounded-lg hover:opacity-90 transition"
+      >
+        {loading
+          ? "Processing..."
+          : "Pay With Stripe"}
+      </button>
+
+    </form>
+  );
+}
+
 export default function EmployerAssessmentRequest() {
+
+  const [
+  clientSecret,
+  setClientSecret,
+] = useState("");
 
   const [
     scheduledAssessments,
@@ -93,38 +313,98 @@ export default function EmployerAssessmentRequest() {
   const [resume, setResume] =
     useState<File | null>(null);
 
-  // LOAD SCHEDULED ASSESSMENTS
-  useEffect(() => {
+    //pricing state
+  const costMapping: Record<string, number> = {
+  HR: 20,
+  Finance: 40,
+  Operations: 60,
+};
 
-    const loadAssessments =
-      async () => {
+const assessmentAmount =
+  costMapping[costUnit] || 0;
 
-        try {
+ 
+  // LOAD STRIPE PAYMENT INTENT
+const loadStripeIntent =
+  async () => {
 
-          const response =
-            await fetch(
-              "/api/schedule-assessment/list"
-            );
+    try {
 
-          const data =
-            await response.json();
+      const response =
+        await fetch(
+          "/api/stripe/create-payment-intent",
+          {
+            method: "POST",
 
-          if (data.success) {
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
 
-            setScheduledAssessments(
-              data.assessments
-            );
+            body: JSON.stringify({
+              amount:
+                assessmentAmount,
+            }),
           }
+        );
 
-        } catch (error) {
+      const data =
+        await response.json();
 
-          console.log(error);
+      setClientSecret(
+        data.clientSecret
+      );
+
+    } catch (error) {
+
+      console.log(error);
+    }
+  };
+
+// RELOAD STRIPE WHEN COST CHANGES
+useEffect(() => {
+
+  if (assessmentAmount > 0) {
+
+    loadStripeIntent();
+
+  }
+
+}, [assessmentAmount]);
+
+ // LOAD SCHEDULED ASSESSMENTS
+ // LOAD SCHEDULED ASSESSMENTS
+useEffect(() => {
+
+  const loadAssessments =
+    async () => {
+
+      try {
+
+        const response =
+          await fetch(
+            "/api/schedule-assessment/list"
+          );
+
+        const data =
+          await response.json();
+
+        if (data.success) {
+
+          setScheduledAssessments(
+            data.assessments
+          );
         }
-      };
 
-    loadAssessments();
+      } catch (error) {
 
-  }, []);
+        console.log(error);
+      }
+    };
+
+  loadAssessments();
+
+}, []);
 
   const toggleSkill = (
     skill: string
@@ -175,11 +455,11 @@ export default function EmployerAssessmentRequest() {
         {/* TABLE */}
         <div>
 
-          <div className="overflow-x-auto rounded-xl border border-white/10">
+          <div className="h-[500px] overflow-y-auto overflow-x-auto rounded-xl border border-white/10 scrollbar-thin scrollbar-thumb-[#4ECDC4] scrollbar-track-[#1f1f1f]">
 
             <table className="w-full text-sm text-left">
 
-              <thead className="bg-[#222] text-gray-300">
+              <thead className="bg-[#222] text-gray-300 sticky top-0 z-10">
 
                 <tr>
 
@@ -711,214 +991,263 @@ export default function EmployerAssessmentRequest() {
                 </div>
 
                 {/* PAYMENT */}
-                <div className="bg-[#2b2b2b] border border-white/10 p-5 rounded-2xl">
+<div className="space-y-6">
 
-                  <div className="flex items-center justify-between mb-4">
+  {/* PAYPAL */}
+  <div className="bg-[#2b2b2b] border border-white/10 p-5 rounded-2xl">
 
-                    <h3 className="text-base font-medium">
-                      Assessment Fee
-                    </h3>
+    <div className="flex items-center justify-between mb-4">
 
-                    <p className="text-2xl font-bold text-green-400">
-                      $40
-                    </p>
+      <h3 className="text-base font-medium">
+        Pay With PayPal
+      </h3>
 
-                  </div>
+      <p className="text-2xl font-bold text-green-400">
+        ${assessmentAmount}
+      </p>
 
-                  <div className="scale-[0.78] md:scale-[0.82] origin-top-left max-w-[260px]">
+    </div>
 
-                    <PayPalButtons
+    <div className="scale-[0.78] md:scale-[0.82] origin-top-left max-w-[260px]">
 
-                      style={{
-                        layout: "vertical",
-                        height: 35,
-                        shape: "rect",
-                        tagline: false,
-                      }}
+      <PayPalButtons
 
-                      createOrder={(
-                        data,
-                        actions
-                      ) => {
+        style={{
+          layout: "vertical",
+          height: 35,
+          shape: "rect",
+          tagline: false,
+        }}
 
-                        return actions.order.create({
-                          intent: "CAPTURE",
+        createOrder={(
+          data,
+          actions
+        ) => {
 
-                          purchase_units: [
-                            {
-                              amount: {
-                                value: "40",
-                                currency_code:
-                                  "USD",
-                              },
-                            },
-                          ],
-                        });
-                      }}
+          return actions.order.create({
+            intent: "CAPTURE",
 
-                      onApprove={async (
-                        data,
-                        actions
-                      ) => {
+            purchase_units: [
+              {
+                amount: {
+                  value: assessmentAmount.toString(),
+                  currency_code:
+                    "USD",
+                },
+              },
+            ],
+          });
+        }}
 
-                        try {
+        onApprove={async (
+          data,
+          actions
+        ) => {
 
-                          // CAPTURE PAYMENT
-                          const order =
-                            await actions.order?.capture();
+          try {
 
-                          // SAVE REQUEST
-                          const response =
-                            await fetch(
-                              "/api/employer-assessment-request/create",
-                              {
-                                method: "POST",
+            const order =
+              await actions.order?.capture();
 
-                                headers: {
-                                  "Content-Type":
-                                    "application/json",
-                                },
+            const response =
+              await fetch(
+                "/api/employer-assessment-request/create",
+                {
+                  method: "POST",
 
-                                body: JSON.stringify({
+                  headers: {
+                    "Content-Type":
+                      "application/json",
+                  },
 
-                                  assessmentId:
-                                    selectedAssessment.id,
+                  body: JSON.stringify({
 
-                                  employeeName:
-                                    selectedAssessment.employeeName,
+                    assessmentId:
+                      selectedAssessment.id,
 
-                                  employeeEmail:
-                                    selectedAssessment.employeeEmail,
+                    employeeName:
+                      selectedAssessment.employeeName,
 
-                                  employeePhone:
-                                    selectedAssessment.phone,
+                    employeeEmail:
+                      selectedAssessment.employeeEmail,
 
-                                  company:
-                                    selectedAssessment.company,
+                    employeePhone:
+                      selectedAssessment.phone,
 
-                                  country:
-                                    selectedAssessment.country,
+                    company:
+                      selectedAssessment.company,
 
-                                  testingCenter:
-                                    selectedAssessment.testingCenter,
+                    country:
+                      selectedAssessment.country,
 
-                                  assessmentDate:
-                                    selectedAssessment.assessmentDate,
+                    testingCenter:
+                      selectedAssessment.testingCenter,
 
-                                  assessmentTime:
-                                    selectedAssessment.assessmentTime,
+                    assessmentDate:
+                      selectedAssessment.assessmentDate,
 
-                                  candidateId,
+                    assessmentTime:
+                      selectedAssessment.assessmentTime,
 
-                                  jobFamily,
+                    candidateId,
 
-                                  skillsFamily,
+                    jobFamily,
 
-                                  costUnit,
+                    skillsFamily,
 
-                                  department,
+                    costUnit,
 
-                                  businessUnit,
+                    department,
 
-                                  selectedSkills,
+                    businessUnit,
 
-                                  paymentId:
-                                    order?.id,
+                    selectedSkills,
 
-                                  paymentStatus:
-                                    order?.status,
+                    paymentId:
+                      order?.id,
 
-                                  amount: 40,
+                    paymentStatus:
+                      order?.status,
 
-                                  testStatus:
-                                    "PENDING",
+                    paymentMethod:
+                      "PAYPAL",
 
-                                  reportStatus:
-                                    "PENDING",
+                    amount: assessmentAmount,
 
-                                  adminApprovalStatus:
-                                    "PENDING",
-                                }),
-                              }
-                            );
+                    testStatus:
+                      "PENDING",
 
-                          const result =
-                            await response.json();
+                    reportStatus:
+                      "PENDING",
 
-                          if (result.success) {
+                    adminApprovalStatus:
+                      "PENDING",
+                  }),
+                }
+              );
 
-                            setShowThankYou(
-                              true
-                            );
+            const result =
+              await response.json();
 
-                            setShowAssessmentModal(
-                              false
-                            );
+            if (result.success) {
 
-                            // RESET FORM
-                            setResume(
-                              null
-                            );
+              setShowThankYou(
+                true
+              );
 
-                            setJobFamily(
-                              ""
-                            );
+              setShowAssessmentModal(
+                false
+              );
+            }
 
-                            setSkillsFamily(
-                              ""
-                            );
+          } catch (error) {
 
-                            setCostUnit(
-                              ""
-                            );
+            console.log(
+              error
+            );
 
-                            setDepartment(
-                              ""
-                            );
+            alert(
+              "Something went wrong"
+            );
+          }
+        }}
 
-                            setBusinessUnit(
-                              ""
-                            );
+        onError={(err) => {
 
-                            setCreditCard(
-                              ""
-                            );
+          console.log(
+            err
+          );
 
-                          } else {
+          alert(
+            "Payment Failed"
+          );
+        }}
+      />
 
-                            alert(
-                              result.message ||
-                                "Failed to save assessment request"
-                            );
-                          }
+    </div>
 
-                        } catch (error) {
+  </div>
 
-                          console.log(
-                            error
-                          );
+  {/* STRIPE */}
+  <div className="bg-[#2b2b2b] border border-white/10 p-5 rounded-2xl">
 
-                          alert(
-                            "Something went wrong"
-                          );
-                        }
-                      }}
+    <div className="flex items-center justify-between mb-4">
 
-                      onError={(err) => {
+      <h3 className="text-base font-medium">
+        Pay With Stripe
+      </h3>
 
-                        console.log(
-                          err
-                        );
+      <p className="text-2xl font-bold text-[#635BFF]">
+        ${assessmentAmount}
+      </p>
 
-                        alert(
-                          "Payment Failed"
-                        );
-                      }}
-                    />
+    </div>
 
-                  </div>
+    {clientSecret && (
 
-                </div>
+      <Elements
+  stripe={stripePromise}
+  options={{
+    clientSecret,
+
+    appearance: {
+      theme: "stripe",
+    },
+  }}
+>
+
+        <CheckoutForm
+          selectedAssessment={
+            selectedAssessment
+          }
+
+          candidateId={
+            candidateId
+          }
+
+          jobFamily={
+            jobFamily
+          }
+
+          skillsFamily={
+            skillsFamily
+          }
+
+          costUnit={
+            costUnit
+          }
+
+          department={
+            department
+          }
+
+          businessUnit={
+            businessUnit
+          }
+
+          selectedSkills={
+            selectedSkills
+          }
+
+          amount={
+            assessmentAmount
+          }
+
+          setShowThankYou={
+            setShowThankYou
+          }
+
+          setShowAssessmentModal={
+            setShowAssessmentModal
+          }
+        />
+
+      </Elements>
+    )}
+
+  </div>
+
+</div>
 
               </div>
 
@@ -963,10 +1292,3 @@ export default function EmployerAssessmentRequest() {
     </PayPalScriptProvider>
   );
 }
-
-
-
-
-
-
-

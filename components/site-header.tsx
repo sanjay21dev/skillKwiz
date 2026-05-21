@@ -17,8 +17,7 @@ export default function SiteHeader() {
 
   return (
     <div className="w-full fixed top-0 left-0 z-50 ">
-      <nav className="flex flex-col w-full md:w-4/5 lg:w-3/5 xl:w-1/2 mx-auto bg-gradient-to-r from-[#002b5c] via-[#3b82f6] to-[#ff7a8f] text-white rounded-b-3xl">
-
+      <nav className="flex flex-col w-full md:w-4/5 lg:w-3/5 xl:w-1/2 mx-auto bg-gradient-to-r from-[#eaf8ff] via-[#f3f8ff] to-[#ffe5ea] text-black shadow-lg rounded-b-3xl border border-gray-200">
         {/* HEADER BAR */}
         <div className="flex items-center justify-between px-4 h-16">
 
@@ -53,7 +52,7 @@ export default function SiteHeader() {
             <Link
               href="/"
               className={`relative group px-3 py-2 text-sm lg:text-base transition ${
-                pathname === "/" ? "text-yellow-400 font-semibold" : "text-white"
+                pathname === "/" ? "text-yellow-400 font-semibold" : "text-gray-800"
               }`}
             >
               Home
@@ -65,7 +64,7 @@ export default function SiteHeader() {
               className={`relative group px-3 py-2 text-sm lg:text-base transition ${
                 pathname === "/about"
                   ? "text-yellow-400 font-semibold"
-                  : "text-white"
+                  : "text-gray-800"
               }`}
             >
               About Us
@@ -77,7 +76,7 @@ export default function SiteHeader() {
               className={`relative group px-3 py-2 text-sm lg:text-base transition ${
                 pathname === "/services"
                   ? "text-yellow-400 font-semibold"
-                  : "text-white"
+                  : "text-gray-800"
               }`}
             >
               Services
@@ -89,7 +88,7 @@ export default function SiteHeader() {
               className={`relative group px-3 py-2 text-sm lg:text-base transition ${
                 pathname === "/blog"
                   ? "text-yellow-400 font-semibold"
-                  : "text-white"
+                  : "text-gray-800"
               }`}
             >
               Blog
@@ -101,7 +100,7 @@ export default function SiteHeader() {
 
         {/* ✅ MOBILE MENU */}
         {isMenuOpen && (
-          <div className="md:hidden flex flex-col items-center py-4 bg-[#335f92] rounded-b-3xl absolute top-0 left-0 w-full pt-16 shadow-lg">
+          <div className="md:hidden flex flex-col items-center py-4 bg-white rounded-b-3xl absolute top-0 left-0 w-full pt-16 shadow-lg">
 
             {["Home", "About Us", "Services", "Blog"].map((item, i) => (
               <Link
@@ -111,7 +110,7 @@ export default function SiteHeader() {
                     ? "/"
                     : `/${item.toLowerCase().replace(" ", "")}`
                 }
-                className="text-white relative group py-3 text-lg w-full text-center"
+                className="text-gray-800 relative group py-3 text-lg w-full text-center"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {item}

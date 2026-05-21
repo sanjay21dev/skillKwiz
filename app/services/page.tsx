@@ -214,18 +214,32 @@ export default function ServicesPage() {
   // =========================
   // EMPLOYEE SUCCESS CONTINUE
   // =========================
-  const continueToEmployeeAssessment =
-    () => {
+  // const continueToEmployeeAssessment =
+  //   () => {
 
-      setEmployeeRegistrationSuccess(
-        false
-      );
+  //     setEmployeeRegistrationSuccess(
+  //       false
+  //     );
 
-      setEmployeeScreen(
-        "assessment"
-      );
-    };
+  //     setEmployeeScreen(
+  //       "assessment"
+  //     );
+  //   };
+const continueToEmployeeAssessment =
+  () => {
 
+    setEmployeeRegistrationSuccess(
+      false
+    );
+
+    setIsLoggedIn(false);
+
+    setUserType(null);
+
+    setEmployeeScreen(
+      "registration"
+    );
+  };
   return (
 
     <div className="min-h-screen bg-gradient-to-br from-[#002b5c] via-[#004aad] to-[#3b82f6] relative overflow-x-hidden">
