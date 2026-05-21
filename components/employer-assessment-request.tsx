@@ -15,6 +15,7 @@ import {
 import {
   Elements,
   PaymentElement,
+  ExpressCheckoutElement,
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
@@ -209,8 +210,43 @@ if (result.error) {
       className="space-y-4"
     >
 
-      <div className="bg-white rounded-xl p-4">
-  <PaymentElement />
+      <div className="space-y-4">
+
+  {/* GOOGLE PAY / APPLE PAY */}
+  <div className="bg-white rounded-xl p-4">
+
+    <ExpressCheckoutElement
+
+  onConfirm={async (event) => {
+
+    if (!stripe || !elements) {
+      return;
+    }
+
+    const { error } =
+      await stripe.confirmPayment({
+        elements,
+        confirmParams: {},
+        redirect: "if_required",
+      });
+
+    if (error) {
+
+      alert(error.message);
+
+    }
+  }}
+/>
+
+  </div>
+
+  {/* CARD FORM */}
+  <div className="bg-white rounded-xl p-4">
+
+    <PaymentElement />
+
+  </div>
+
 </div>
 
       <button
@@ -1193,6 +1229,7 @@ useEffect(() => {
     appearance: {
       theme: "stripe",
     },
+    loader: "auto",
   }}
 >
 
