@@ -133,7 +133,7 @@ export default function LoginSection() {
                 Sign in to SkillKwiz
               </h2>
               <p className="text-xs text-white/70 text-center mb-6">
-                Access your dashboard and manage assessments
+                Access your dashboard and manage assessments.
               </p>
 
               <form className="space-y-4" onSubmit={handleSignIn}>
