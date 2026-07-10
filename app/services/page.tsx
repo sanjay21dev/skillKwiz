@@ -260,10 +260,10 @@ const continueToEmployeeAssessment =
       <div className="relative z-15 pt-16">
 
         <div
-    className={`mx-auto px-4 ${
+    className={`mx-auto ${
       userType === "admin"
-        ? "w-full max-w-[1900px]"
-        : "max-w-5xl"
+        ? "w-full max-w-none px-0"
+        : "px-4 max-w-5xl"
     }`}
   >
 
