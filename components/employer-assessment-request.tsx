@@ -1035,7 +1035,7 @@ useEffect(() => {
     <div className="flex items-center justify-between mb-4">
 
       <h3 className="text-base font-medium">
-        Pay With PayPal
+        Pay With PayPal.
       </h3>
 
       <p className="text-2xl font-bold text-green-400">
